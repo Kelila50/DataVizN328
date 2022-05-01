@@ -7,12 +7,13 @@
     <style>
         text {
             font-family: Verdana;
-            font-size: 15px;
+            font-size: 1em;
         }
 
         .axis-label {
             font-weight: bold;
             font-size: 1.2em;
+            text-align: center;
         }
 
         .axis line {
@@ -22,7 +23,7 @@
 
         .tick text {
             fill: black;
-            font-size: 1em;
+            font-size: 1.5em;
         }
 
         rect {
@@ -33,15 +34,23 @@
         .tooltip {
             position: absolute;
             z-index: 999;
+            width: auto;
+            height: auto;
+            padding: 20px;
+            background-color: #034159;
+            -webkit-border-radius: 5px;
+            -moz-border-radius: 5px;
+            border-radius: 5px;
+            -webkit-box-shadow: 4px 4px 4px 5px rgba(0, 0, 0, 0.4);
+            -moz-box-shadow: 4px 4px 4px 5px rgba(0, 0, 0, 0.4);
+            box-shadow: 4px 4px 4px 5px rgba(0, 0, 0, 0.4);
             display: block;
             word-wrap: break-word;
             opacity: 0;
             pointer-events: none;
-            background-color: #034159;
             border-radius: 10px;
-            padding: 20px;
             color: white;
-            font-size: 18px;
+            font-size: 1em;
             font-family: sans-serif;
         }
 
@@ -54,7 +63,7 @@
         }
 
         .not-hover {
-            opacity: 0.75;
+            opacity: 0.35;
         }
     </style>
 
@@ -64,25 +73,28 @@
 <body>
 
     <div id="main" style="background-color: mintcream" ;>
-
-        <a href="https://www.youtube.com"> <b><big>Prows Final Project Video and Paper found here</b></big> </a>
+<p><br></br>
+        <a href="https://youtu.be/D2yXUZsp_wk"> <b><big>Prows Final Project Video linked here</b></big> </a>
+        <br></br>
+        <a href="https://kelila50.github.io/DataVizN328/Prows, Kyla - Final Proj Paper.docx"> <b><big>Prows Final Project Paper linked here</b></big> </a>
+</p>
     </div>
 
     <script>
 
         var selectableGroups = ["sex", "day", "time", "size"];
         var selectedGroup = selectableGroups[0];
-        var colors = ["#9FC131", "#025951", "#3B8C66", "#217373",];
+        var colors = ["#146551", "#9FC131", "#DBF227", "#38184C",];
         var color = d3.scaleOrdinal()
             .domain(["total_bill", "tip", ...selectableGroups])
             .range(colors);
 
-        // set the dimensions and margins of the graph
+        // sets the dimensions and margins of the graph
         var margin = { top: 100, right: 100, bottom: 120, left: 100 },
             width = window.innerWidth - margin.left - margin.right,
             height = window.innerHeight - margin.top - margin.bottom;
 
-        // append the svg object to the body of the page
+        // appends the svg object to the body of the page
         var svg = d3.select("#main")
             .append("svg")
             .attr("width", width + margin.left + margin.right)
@@ -91,7 +103,7 @@
             .attr("transform",
                 "translate(" + margin.left + "," + margin.top + ")");
 
-        //Read the data
+        //Reads the data by parsing it first
         d3.csv("tips.csv", function (data) {
 
             let barRows = [];
@@ -204,7 +216,7 @@
             svg.append("text")
                 .attr("text-anchor", "end")
                 .attr("x", "50%")
-                .attr("y", margin.top / 20)
+                .attr("y", margin.top / 10)
                 .attr("class", "axis-label")
                 .text("Tips at Restaurant Voir")
 
@@ -219,13 +231,11 @@
             //Y-Axis Label
             svg.append("text")
                 .attr("text-anchor", "end")
-                .attr("x", -(height / 2) + 175)
-                .attr("y", -margin.left / 2)
+                .attr("x", -(height / 2) + 150)
+                .attr("y", -margin.left / 1.5)
                 .attr("transform", "rotate(-90)")
                 .attr("class", "axis-label")
-                .text("Average Tip - shown as % of Total Bill")
-
-
+                .text("Average Tip on Total Bill")
 
             // Add X axis
             var x = d3.scaleBand();
@@ -234,7 +244,7 @@
             const barWidth = Math.max(width * 0.065, 15);
             const spacing = 10;
             const groupSpacing = (width - (barRows.length * barWidth + spacing)) / Object.keys(barRowsGrouped).length;
-            const chartInnerPadding = 30;
+            const chartInnerPadding = 25;
 
             var layoutX = function (groupIndex, barIndex) {
                 return (chartInnerPadding + (groupIndex * groupSpacing)) + (barIndex * barWidth);
@@ -263,9 +273,8 @@
                 .attr("y", function (d) {
                     return height + 25;
                 })
-                .attr("text-align", "center")
                 .attr("font-family", "sans-serif")
-                .attr("font-size", "14px")
+                .attr("font-size", "12px")
                 .attr("fill", "black")
                 .attr("text-anchor", "left");
 
@@ -278,7 +287,7 @@
                 .attr("x", function (d, i) { return layoutX(d.groupIndex, i); })
                 .attr("y", function (d, i) { return y(d.average) - 10; })
                 .attr("font-family", "sans-serif")
-                .attr("font-size", "14px")
+                .attr("font-size", "12px")
                 .attr("fill", "black")
                 .attr("text-anchor", "left");
 

@@ -7,31 +7,55 @@
     <style>
         text {
             font-family: Verdana;
-            font-size: 15px;}
+            font-size: 15px;
+        }
 
         .axis-label {
             font-weight: bold;
-            font-size: 1.2em;}
+            font-size: 1.2em;
+        }
 
         .axis line {
             fill: none;
-            stroke: black;}
+            stroke: black;
+        }
 
         .tick text {
             fill: black;
-            font-size: 1em;}
+            font-size: 1em;
+        }
 
         rect {
             stroke: black;
-            stroke-width: 1;}
+            stroke-width: 1;
+        }
 
         .tooltip {
             position: absolute;
             z-index: 999;
             display: block;
             word-wrap: break-word;
-            opacity: 0;}
+            opacity: 0;
+            pointer-events: none;
+            background-color: #034159;
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+            font-size: 18px;
+            font-family: sans-serif;
+        }
 
+        rect {
+            transition: opacity 200ms ease;
+        }
+
+        .hover {
+            opacity: 1;
+        }
+
+        .not-hover {
+            opacity: 0.75;
+        }
     </style>
 
 </head>
@@ -39,11 +63,10 @@
 
 <body>
 
-    <div id="main"
-        style= "background-color: mintcream";>
+    <div id="main" style="background-color: mintcream" ;>
 
         <a href="https://www.youtube.com"> <b><big>Prows Final Project Video and Paper found here</b></big> </a>
-          </div>
+    </div>
 
     <script>
 
@@ -73,38 +96,62 @@
 
             let barRows = [];
 
+            data.forEach(d => {
+                d.tipPercent = Math.round((+d.tip / +d.total_bill) * 100) / 100;
+            });
+
+            const avgTipPercent = average(data.map(x => x.tipPercent));
+            const avgTip = average(data.map(x => +x.tip));
+            const maxTipPercent = data.sort((a, b) => b.tipPercent - a.tipPercent)[0];
+
+            barRows.push({
+                group: 'final',
+                groupIndex: 0,
+                label: 'Avg Tip',
+                value: maxTipPercent.tipPercent,
+                average: avgTipPercent,
+                color: colors[0],
+                tooltipInfo: `Average tip amount: ${d3.format("($.2f")(avgTip)}<br/><br/>Most frequently tipped meal: ${maxTipPercent.time}<br/><br/>Most tips were received on: ${maxTipPercent.day}<br/><br/> Gender who tipped most often: ${maxTipPercent.sex}`
+            });
+
+
             const avgTipsByGender = Object.keys(groupBy(data, "sex"));
+
             avgTipsByGender.forEach((genderEntry, i) => {
+                const genderEntries = data.filter(dataItem => dataItem.sex === genderEntry);
 
-                const maxGenderTip = +data.filter(dataItem => dataItem.sex === genderEntry).sort((a, b) => +b.tip - +a.tip)[0].tip;
+                const maxGenderTip = +genderEntries.sort((a, b) => +b.tip - +a.tip)[0].tip;
 
-                const avgGenderTip = Math.round(average(data.filter(dataItem => dataItem.sex === genderEntry).map(x => +x.tip)) * 100) / 100;
+                const avgGenderTipAmount = Math.round(average(genderEntries.map(x => +x.tip)) * 100) / 100;
+                const avgGenderTipPercent = average(genderEntries.map(x => x.tipPercent));
 
-                const tipsGroupedByMeal = groupBy(data.filter(dataItem => dataItem.sex === genderEntry), "time");
+                const tipsGroupedByMeal = groupBy(genderEntries, "time");
                 const mostFrequentlyTippedMeal = findMax(tipsGroupedByMeal);
 
-                const tipsGroupedByDay = groupBy(data.filter(dataItem => dataItem.sex === genderEntry), "day");
+                const tipsGroupedByDay = groupBy(genderEntries, "day");
                 const tipsByDayMax = findMax(tipsGroupedByDay);
 
                 barRows.push({
                     group: 'gender',
-                    groupIndex: 0,
+                    groupIndex: 1,
                     label: genderEntry,
                     value: maxGenderTip,
-                    average: avgGenderTip,
+                    average: avgGenderTipPercent,
                     color: colors[i],
-                    tooltipInfo: `Average amount tipped by this gender: $${avgGenderTip}<br/><br/> This gender's most frequently tipped mealtime: ${mostFrequentlyTippedMeal.key}<br/><br/>This gender's most frequently tipped day of the week: ${tipsByDayMax.key}`
+                    tooltipInfo: `Average amount tipped by this gender: ${d3.format("($.2f")(avgGenderTipAmount)}<br/><br/> This gender's most frequently tipped mealtime: ${mostFrequentlyTippedMeal.key}<br/><br/>This gender's most frequently tipped day of the week: ${tipsByDayMax.key}`
                 });
             });
 
             const avgTipByMeal = Object.keys(groupBy(data, "time"));
             avgTipByMeal.forEach((mealEntry, i) => {
+                const mealEntries = data.filter(dataItem => dataItem.time === mealEntry);
 
-                const maxMealTip = +data.filter(dataItem => dataItem.time === mealEntry).sort((a, b) => +b.tip - +a.tip)[0].tip;
+                const maxMealTip = +mealEntries.sort((a, b) => +b.tip - +a.tip)[0].tip;
 
-                const avgMealTip = Math.round(average(data.filter(dataItem => dataItem.time === mealEntry).map(x => +x.tip)) * 100) / 100;
+                const avgMealTipAmount = Math.round(average(mealEntries.map(x => +x.tip)) * 100) / 100;
+                const avgMealTipPercent = average(mealEntries.map(x => x.tipPercent));
 
-                const tipsGroupedByMeal = groupBy(data.filter(dataItem => dataItem.time === mealEntry), "time");
+                const tipsGroupedByMeal = groupBy(mealEntries, "time");
 
                 Object.keys(tipsGroupedByMeal).forEach(mealKey => {
 
@@ -114,12 +161,12 @@
 
                     barRows.push({
                         group: 'meal',
-                        groupIndex: 1,
+                        groupIndex: 2,
                         label: mealEntry,
                         value: maxMealTip,
-                        average: avgMealTip,
+                        average: avgMealTipPercent,
                         color: colors[i],
-                        tooltipInfo: `Average amount tipped at this mealtime: $${avgMealTip}<br/><br/>Most frequently tipping gender at this mealtime: ${genderTippedMostOftenAtMeal.key}<br/><br/> ${genderTippedMostOftenAtMeal.key}s tipped most often at this mealtime on: ${dayGenderTippedMostOften.key}`
+                        tooltipInfo: `Average amount tipped at this mealtime: ${d3.format("($.2f")(avgMealTipAmount)}<br/><br/>Most frequently tipping gender at this mealtime: ${genderTippedMostOftenAtMeal.key}<br/><br/> ${genderTippedMostOftenAtMeal.key}s tipped most often at this mealtime on: ${dayGenderTippedMostOften.key}`
                     });
                 });
             });
@@ -128,9 +175,11 @@
             const daysGrouped = Object.keys(groupBy(data, "day"));
             daysGrouped.forEach((dayKey, i) => {
                 const dayEntries = data.filter(x => x.day === dayKey);
+
                 const maxTipOnDay = +dayEntries.sort((a, b) => +b.tip - +a.tip)[0].tip;
 
-                const averageTipOnDay = Math.round(average(dayEntries.map(x => +x.tip)) * 100) / 100;
+                const averageTipOnDayAmount = Math.round(average(dayEntries.map(x => +x.tip)) * 100) / 100;
+                const averageTipOnDayPercent = average(dayEntries.map(x => x.tipPercent));
 
                 const genderMostFrequentTipper = findMax(groupBy(dayEntries, "sex"));
 
@@ -138,157 +187,170 @@
 
                 barRows.push({
                     group: 'day',
-                    groupIndex: 2,
+                    groupIndex: 3,
                     label: dayKey,
                     value: maxTipOnDay,
-                    average: averageTipOnDay,
+                    average: averageTipOnDayPercent,
                     color: colors[i],
-                    tooltipInfo: `Average amount tipped on this day of the week: $${averageTipOnDay}<br/><br/>The gender that tipped most often on this day was: ${genderMostFrequentTipper.key}s<br/><br/> On this day of the week ${genderMostFrequentTipper.key}s tipped most often at: ${mealMostTippedOn.key}`
+                    tooltipInfo: `Average amount tipped on this day of the week: ${d3.format("($.2f")(averageTipOnDayAmount)}<br/><br/>The gender that tipped most often on this day was: ${genderMostFrequentTipper.key}s<br/><br/> On this day of the week ${genderMostFrequentTipper.key}s tipped most often at: ${mealMostTippedOn.key}`
                 });
             });
 
-            const avgTip = Math.round(average(data.map(x => +x.tip)) * 100) / 100;
-            const maxTipEntry = data.sort((a, b) => +b.tip - +a.tip)[0];
-
-
-            barRows.push({
-                group: 'final',
-                groupIndex: 3,
-                label: 'Avg Tip @ 116th St. Location',
-                value: +maxTipEntry.tip,
-                average: avgTip,
-                color: colors[0],
-                tooltipInfo: `Amount of Average tip: $${avgTip}<br/><br/>Most frequently tipped meal: ${maxTipEntry.time}<br/><br/>Most tips were received on: ${maxTipEntry.day}<br/><br/> Gender who tipped most often: ${maxTipEntry.sex}`
-            });
 
             const barRowsGrouped = groupBy(barRows, 'group');
-            console.log(barRowsGrouped);
 
 
-                //Title Label
-                svg.append("text")
-                    .attr("text-anchor", "end")
-                    .attr("x", "50%")
-                    .attr("y", margin.top / 20)
-                    .attr("class", "axis-label")
-                    .text("Tips at Restaurant Voir")
+            //Title Label
+            svg.append("text")
+                .attr("text-anchor", "end")
+                .attr("x", "50%")
+                .attr("y", margin.top / 20)
+                .attr("class", "axis-label")
+                .text("Tips at Restaurant Voir")
 
-                const maxValue = barRows.map(x => x.value).sort((a, b) => b - a)[0] + 2;
+            // Add Y axis
+            var y = d3.scaleLinear()
+                .domain([0, avgTipPercent + 0.05])
+                .range([height, 0])
 
-                // Add Y axis
-                var y = d3.scaleLinear()
-                    .domain([0, maxValue])
-                    .range([height, 0]);
+            svg.append("g")
+                .call(d3.axisLeft(y).tickFormat((d) => d3.format("0.0%")(d)));
 
-                svg.append("g")
-                    .call(d3.axisLeft(y));
-
-                //Y-Axis Label
-                svg.append("text")
-                    .attr("text-anchor", "end")
-                    .attr("x", -(height / 2) + 175)
-                    .attr("y", -margin.left / 2)
-                    .attr("transform", "rotate(-90)")
-                    .attr("class", "axis-label")
-                    .text("Average Tip - shown as % of Total Bill")
+            //Y-Axis Label
+            svg.append("text")
+                .attr("text-anchor", "end")
+                .attr("x", -(height / 2) + 175)
+                .attr("y", -margin.left / 2)
+                .attr("transform", "rotate(-90)")
+                .attr("class", "axis-label")
+                .text("Average Tip - shown as % of Total Bill")
 
 
 
-                // Add X axis
-                var x = d3.scaleBand();
+            // Add X axis
+            var x = d3.scaleBand();
+
+            // Add bars
+            const barWidth = Math.max(width * 0.065, 15);
+            const spacing = 10;
+            const groupSpacing = (width - (barRows.length * barWidth + spacing)) / Object.keys(barRowsGrouped).length;
+            const chartInnerPadding = 30;
+
+            var layoutX = function (groupIndex, barIndex) {
+                return (chartInnerPadding + (groupIndex * groupSpacing)) + (barIndex * barWidth);
+            }
+
+            var bars = svg.append('g')
+                .selectAll("rect")
+                .data(barRows)
+                .enter()
+                .append("g");
+
+            bars.append("rect")
+                .attr("x", function (d, i) { return layoutX(d.groupIndex, i); })
+                .attr("y", function (d, i) { return y(d.average); })
+                .attr("width", `${barWidth - spacing}px`)
+                .attr("height", function (d) { return height - y(d.average); })
+                .style("fill", function (d, i) { return d.color });
 
 
-                // Add bars
-                const barWidth = 90;
-                const spacing = 10;
-                const groupSpacing = (width - (barRows.length * barWidth + spacing)) / Object.keys(barRowsGrouped).length;
-                const chartInnerPadding = 10;
-
-                var bars = svg.append('g')
-                    .selectAll("rect")
-                    .data(barRows)
-                    .enter()
-                    .append("g");
-
-                bars.append("rect")
-                    .attr("x", function (d, i) { return chartInnerPadding + (d.groupIndex * groupSpacing); })
-                    .attr("transform", function (d, i) { return "translate(" + i * barWidth + "," + y(d.value) + ")"; })
-                    .attr("width", `${barWidth - spacing}px`)
-                    .attr("height", function (d) { console.log(d.value, y(d.value), height); return height - y(d.value); })
-                    .style("fill", function (d, i) { return d.color });
-
-
-                bars.append("text")
-                    .text(function (d) {
-                        return "Male______________Female";
-                    })
-                    .attr("x", function (d, i) { return chartInnerPadding + (d.groupIndex * groupSpacing); })
-                    .attr("transform", function (d, i) { return "translateX(" + i * barWidth + ")"; })
-                    .attr("y", function (d) {
-                        return height + 25;
-                    })
-                    .attr("font-family", "sans-serif")
-                    .attr("font-size", "14px")
-                    .attr("fill", "black")
-                    .attr("text-anchor", "left");
-
-                setupTooltip(d3.select("#main"));
+            //bottom labels
+            bars.append("text")
+                .text(function (d) {
+                    return d.label;
                 })
+                .attr("x", function (d, i) { return layoutX(d.groupIndex, i); })
+                .attr("y", function (d) {
+                    return height + 25;
+                })
+                .attr("text-align", "center")
+                .attr("font-family", "sans-serif")
+                .attr("font-size", "14px")
+                .attr("fill", "black")
+                .attr("text-anchor", "left");
 
-                function average(array) {
-                return array.reduce((a, b) => a + b) / array.length;
+
+            //top value labels
+            bars.append("text")
+                .text(function (d) {
+                    return d3.format("0.0%")(d.average);
+                })
+                .attr("x", function (d, i) { return layoutX(d.groupIndex, i); })
+                .attr("y", function (d, i) { return y(d.average) - 10; })
+                .attr("font-family", "sans-serif")
+                .attr("font-size", "14px")
+                .attr("fill", "black")
+                .attr("text-anchor", "left");
+
+
+            setupTooltip(d3.select("#main"));
+        })
+
+        function average(array) {
+            return array.reduce((a, b) => a + b) / array.length;
+        }
+
+        function findMax(grouping) {
+            let maxKey = '';
+            let maxValue = 0;
+
+            Object.keys(grouping).forEach(key => {
+                if (grouping[key].length > maxValue) {
+                    maxValue = grouping[key].length;
+                    maxKey = key;
                 }
+            });
 
-                function findMax(grouping) {
-                let maxKey = '';
-                let maxValue = 0;
-                Object.keys(grouping).forEach(key => {
-                    if (grouping[key].length > maxValue) {
-                        maxValue = grouping[key].length;
-                        maxKey = key;
-                    }
-                });
+            return { key: maxKey, value: maxValue };
+        }
 
-                return { key: maxKey, value: maxValue };
-                }
+        function groupBy(data, key) {
+            return data.reduce(function (rv, x) {
+                (rv[x[key]] = rv[x[key]] || []).push(x);
+                return rv;
+            }, {});
+        };
 
-                function groupBy(data, key) {
-                return data.reduce(function (rv, x) {
-                    (rv[x[key]] = rv[x[key]] || []).push(x);
-                    return rv;
-                }, {});
-                };
-
-                function setupTooltip(root, formatter) {
-                var tooltip = root
-                    .append("div")
-                    .attr("class", "tooltip")
-                    .style("background-color", "#034159")
-                    .style("border-radius", "10px")
-                    .style("padding", "20px")
-                    .style("color", "white")
-                    .style("font-size", "18px")
-                    .style("font-family", "sans-serif")
+        function setupTooltip(root, formatter) {
+            var tooltip = root
+                .append("div")
+                .attr("class", "tooltip");
 
 
-            var showTooltip = function (d) {
+            var showTooltip = function (d, i, elements) {
                 tooltip
-                    // .transition()
-                    // .duration(200);
+                // .transition()
+                // .duration(200);
                 tooltip
                     .style("opacity", 1)
                     .html(d.tooltipInfo)
                     .style("left", (d3.mouse(this)[0] + 30) + "px")
                     .style("top", (d3.mouse(this)[1] + 30) + "px")
+
+                for (let index = 0; index < elements.length; index++) {
+                    if (i === index) {
+                        elements[index].classList.add('hover');
+                    } else {
+                        elements[index].classList.add('not-hover');
+                    }
+                }
             }
             var moveTooltip = function (d) {
                 tooltip
                     .style("left", (d3.mouse(this)[0] + 30) + "px")
                     .style("top", (d3.mouse(this)[1] + 30) + "px")
             }
-            var hideTooltip = function (d) {
+            var hideTooltip = function (d, i, elements) {
+                for (let index = 0; index < elements.length; index++) {
+                    if (i === index) {
+                        elements[index].classList.remove('hover');
+                    } else {
+                        elements[index].classList.remove('not-hover');
+                    }
+                }
+
                 tooltip
-                    .transition()
+                    // .transition()
                     // .duration(200)
                     .style("opacity", 0)
             }
